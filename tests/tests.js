@@ -183,7 +183,7 @@ test('should throw error if no db was provided', t => {
   }
 });
 
-test('should update reducer state when db was changed', t => {
+test('should update reducer state when db was changed (simulates replication)', t => {
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db})(createStore);
   const reducer = setupPlainReducer();
