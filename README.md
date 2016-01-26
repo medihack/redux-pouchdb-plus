@@ -93,9 +93,9 @@ persistentReducer(counter, {db, immutable: true});
 plain Javascript data types. If you set `immutable` to `true` just make
 sure to only use immutable data structures!
 
-## Note
+## Notes
 
-The current behavior is to have a document relative to the reducer that looks like:
+The current behavior is to have one document for each persisted reducer that looks like:
 
 ``` js
 {
