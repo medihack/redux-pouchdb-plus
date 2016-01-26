@@ -1,4 +1,5 @@
 import equal from 'deep-equal';
+import Immutable from 'immutable';
 import save from './save.js';
 
 const REINIT = 'redux-pouchdb-plus/REINIT';
@@ -22,6 +23,7 @@ export const persistentStore = (storeOptions={}) => createStore => (reducer, ini
 }
 
 export const persistentReducer = (reducer, reducerOptions={}) => {
+  let isImmutable = reducerOptions.immutable;
   let isInitialized = false;
   let initialState;
   let store;
@@ -46,7 +48,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       setReducer(doc);
     }).catch(err => {
       if (err.status === 404)
-        return saveReducer(reducer.name, state);
+        return saveReducer(reducer.name, toPouch(state));
       else
         throw err;
     }).then(() => {
@@ -59,8 +61,8 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         doc_ids: [reducer.name]
       }).on('change', change => {
         if (!change.doc.state)
-          saveReducer(change.doc._id, currentState);
-        else if (!equal(change.doc.state, currentState))
+          saveReducer(change.doc._id, toPouch(currentState));
+        else if (!isEqual(change.doc.state, currentState))
           setReducer(change.doc);
       });
     }).catch(err => {
@@ -70,20 +72,50 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
 
   function setReducer(doc) {
     const { _id, _rev, state } = doc;
+    const _state = fromPouch(state);
 
     store.dispatch({
       type: SET_REDUCER,
       reducer: _id,
-      state,
+      state: _state,
       _rev
     });
   };
+
+  // Support functions for Immutable js.
+  // Immutable.toJS and Immutable.fromJS don't support
+  // a mixture of immutable and plain js data.
+  // transit-immutable-js would be another option that
+  // also would handle this mixture.
+  // Unfortunately it serializes to a bit
+  // cryptic JSON string that is not so nice to save
+  // in PouchDB.
+  function toPouch(x) {
+    if (isImmutable)
+      return x.toJS();
+    else
+      return x;
+  }
+  function fromPouch(x) {
+    if (isImmutable)
+      return Immutable.fromJS(x);
+    else
+      return x;
+  }
+  function isEqual(x, y) {
+    if (isImmutable)
+      return Immutable.is(x, y);
+    else
+      return equal(x, y);
+  }
 
   return (state, action) => {
     switch (action.type) {
       case INIT:
         store = action.store;
         storeOptions = action.storeOptions;
+        if (isImmutable == null)
+          isImmutable = storeOptions.immutable;
       case REINIT:
         if (!action.reducerName || action.reducerName === reducer.name) {
           reinitReducer(initialState);
@@ -96,8 +128,8 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       default:
         const nextState = reducer(state, action);
         if (!initialState) initialState = nextState;
-        if (isInitialized && !equal(nextState, currentState)) {
-          saveReducer(reducer.name, nextState);
+        if (isInitialized && !isEqual(nextState, currentState)) {
+          saveReducer(reducer.name, toPouch(nextState));
         }
 
         return currentState = nextState;

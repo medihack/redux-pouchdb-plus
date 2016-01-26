@@ -41,5 +41,8 @@
   },
   "peerDependencies": {
     "pouchdb": "^5.2.0"
+  },
+  "dependencies": {
+    "immutable": "^3.7.6"
   }
 }

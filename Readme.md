@@ -7,8 +7,9 @@
 This code is heavily inspired (and some code reused) by Vicente de Alencar's [redux-pouchdb](https://github.com/vicentedealencar/redux-pouchdb).
 So all Kudos to him. The rewrite was necessary to allow the following extras.
 
-- have different Pouch databases for different reducers
-- allow to switch databases dynamically
+- Have different Pouch databases for different reducers.
+- Allow to switch databases dynamically.
+- Support for [Immutable](https://facebook.github.io/immutable-js/) states beside pure Javascript types.
 
 ## Usage
 
@@ -76,6 +77,21 @@ const db = (reducerName, store, additionalOptions) => {
 const finalReducer = persistentReducer(counter, {db});
 reinit('counter');
 ```
+
+You can use [Immutable](https://facebook.github.io/immutable-js/) state by setting
+the `immutable` option.
+
+```js
+// to the store enhancer (for all persistent reducers)
+persistentStore({db, immutable: true})
+// or to a reducer directly (prioritized)
+persistentReducer(counter, {db, immutable: true});
+```
+
+**Cave!** As internally it is serialized with `Immutable.toJS()` and
+`Immutable.fromJS` it is not possible to use a mixture of immutable and
+plain Javascript data types. If you set `immutable` to `true` just make
+sure to only use immutable data structures!
 
 ## Note
 
