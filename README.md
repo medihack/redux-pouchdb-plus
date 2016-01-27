@@ -5,13 +5,18 @@
 **Redux PouchDB Plus** synchronizes a [Redux](rackt.github.io/redux) store with a [PouchDB](http://pouchdb.com/) database.
 
 This code is heavily inspired (and some code reused) by Vicente de Alencar's [redux-pouchdb](https://github.com/vicentedealencar/redux-pouchdb).
-So all Kudos to him. The rewrite was necessary to allow the following extras.
+So all Kudos to him. The rewrite was necessary to allow the following extras:
 
 - Have different Pouch databases for different reducers.
 - Allow to switch databases dynamically.
 - Support for [Immutable](https://facebook.github.io/immutable-js/) states beside pure Javascript types.
+- Provide several callbacks (when initialization and database access happens).
+
+The code is quite well tested using [tape](https://github.com/substack/tape).
 
 ## Usage
+
+### General setup
 
 The reducers you wish to persist should be enhanced with this higher order reducer (`persistentReducer`).
 
@@ -61,6 +66,8 @@ const db2 = new PouchDB('another_dbname');
 const finalReducer = persistentReducer(counter, {db: db2});
 ```
 
+### Switching databases during runtime
+
 You may also provide a function that return a database connector instead of the
 connector itself. This makes it possible to switch databases dynamically during runtime.
 
@@ -78,6 +85,8 @@ const finalReducer = persistentReducer(counter, {db});
 reinit('counter');
 ```
 
+### Use Immutable js states
+
 You can use [Immutable](https://facebook.github.io/immutable-js/) state by setting
 the `immutable` option.
 
@@ -92,6 +101,31 @@ persistentReducer(counter, {db, immutable: true});
 `Immutable.fromJS` it is not possible to use a mixture of immutable and
 plain Javascript data types. If you set `immutable` to `true` just make
 sure to only use immutable data structures!
+
+### Provided callback functions
+
+You may provide the following callback functions as addition options to
+`persistentReducer` or `persistentReducer`:
+
+```js
+// example for persistentStore, but works the same for persistentReducer function.
+persistentStore(counter {
+  db,
+  onInit: (reducerName, reducerState, dispatch) => {
+    // called when this reducer was initialized
+    // (the state was loaded from or saved to the
+    // database for the first time or after a reinit action)
+  },
+  onUpdate: (reducerName, reducerState, dispatch) => {
+    // called when the state of reducer was updated with
+    // data from the database
+  },
+  onSave: (reducerName, reducerState, dispatch) => {
+    // called every time the state of this reducer was
+    // saved to the database
+  }
+});
+```
 
 ## Notes
 
