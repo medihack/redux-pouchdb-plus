@@ -1,7 +1,7 @@
 {
   "name": "redux-pouchdb-plus",
   "version": "0.3.0",
-  "description": "Synchronize Redux store with PouchDB to have a persitent store.",
+  "description": "Synchronize Redux store with PouchDB to have a persistent store.",
   "main": "lib/index.js",
   "scripts": {
     "prepublish": "rimraf lib && babel src --out-dir lib",
@@ -40,9 +40,7 @@
     "timeout-then": "^1.0.0"
   },
   "peerDependencies": {
-    "pouchdb": "^5.2.0"
-  },
-  "dependencies": {
+    "pouchdb": "^5.2.0",
     "immutable": "^3.7.6"
   }
 }
