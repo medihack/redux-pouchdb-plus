@@ -37,6 +37,8 @@ const setupImmutableReducer = () => {
 }
 
 test('should persist store state with provided db connector', t => {
+  t.plan(5);
+
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db})(createStore);
   const reducer = setupPlainReducer();
@@ -61,15 +63,52 @@ test('should persist store state with provided db connector', t => {
   }).then(() => {
     return db.destroy();
   }).then(() => {
-    t.end();
+    t.ok(true);
   });
 });
 
 test('should persist store state with provided db function', t => {
+  t.plan(5);
+
+  const db = function() {
+    return new PouchDB('testdb', {db : require('memdown')})
+  };
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer);
+  const store = createPersistentStore(finalReducer);
+
+  timeout(500).then(() => {
+    t.equal(store.getState().x, 5);
+    return db().get(reducer.name);
+  }).then(doc => {
+    t.equal(store.getState().x, doc.state.x);
+  }).then(() => {
+    store.dispatch({
+      type: INCREMENT
+    });
+    return timeout(500);
+  }).then(() => {
+    t.equal(store.getState().x, 6);
+    return db().get(reducer.name);
+  }).then(doc => {
+    t.equal(store.getState().x, doc.state.x);
+  }).then(() => {
+    return db().destroy();
+  }).then(() => {
+    t.ok(true);
+  });
+});
+
+
+test('should handle a reinit action of multiple reducers correctly', t => {
+  t.plan(17);
+
   const db1 = new PouchDB('testdb1', {db: require('memdown')});
   const db2 = new PouchDB('testdb2', {db: require('memdown')});
 
   let dbChoice = 1;
+  // called 6 times cause of initial init and two reinits
   const db = (reducerName, store) => {
     t.equal(reducerName, 'reducer');
     t.ok(store.getState());
@@ -134,11 +173,36 @@ test('should persist store state with provided db function', t => {
   }).then(() => {
     return Promise.all([db1.destroy(), db2.destroy()]);
   }).then(() => {
-    t.end();
+    t.ok(true);
+  });
+});
+
+test('should handle a reinit with provided reducer name', t => {
+  t.plan(3);
+
+  const db = new PouchDB('testdb', {db : require('memdown')});
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer);
+  const store = createPersistentStore(finalReducer);
+
+  timeout(500).then(() => {
+    store.dispatch(reinit('reducer'));
+  }).then(() => {
+    t.ok(true);
+    store.dispatch(reinit('foo'));
+  }).catch(() => {
+    t.ok(true);
+  }).then(() => {
+    return db.destroy();
+  }).then(() => {
+    t.ok(true);
   });
 });
 
 test('should prefer reducer db over store db', t => {
+  t.plan(3);
+
   const storeDb = new PouchDB('testdb1', {db : require('memdown')});
   const reducerDb = new PouchDB('testdb2', {db : require('memdown')});
   const createPersistentStore = persistentStore({db: storeDb})(createStore);
@@ -163,7 +227,7 @@ test('should prefer reducer db over store db', t => {
     t.equal(err.status, 404);
     return reducerDb.destroy();
   }).then(() => {
-    t.end();
+    t.ok(true);
   });
 });
 
@@ -182,6 +246,8 @@ test('should throw error if no db was provided', t => {
 });
 
 test('should update reducer state when db was changed (simulates replication)', t => {
+  t.plan(4);
+
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db})(createStore);
   const reducer = setupPlainReducer();
@@ -202,11 +268,13 @@ test('should update reducer state when db was changed (simulates replication)', 
   }).then(() => {
     return db.destroy();
   }).then(() => {
-    t.end();
+    t.ok(true);
   });
 });
 
 test('should work with immutable js data types', t => {
+  t.plan(5);
+
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db, immutable: true})(createStore);
   const reducer = setupImmutableReducer();
@@ -231,11 +299,13 @@ test('should work with immutable js data types', t => {
   }).then(() => {
     return db.destroy();
   }).then(() => {
-    t.end();
+    t.ok(true);
   });
 });
 
 test('reducer immutable option should overwrite store immutable option', t => {
+  t.plan(5);
+
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db, immutable: false})(createStore);
   const reducer = setupImmutableReducer();
@@ -260,7 +330,7 @@ test('reducer immutable option should overwrite store immutable option', t => {
   }).then(() => {
     return db.destroy();
   }).then(() => {
-    t.end();
+    t.ok(true);
   });
 });
 
