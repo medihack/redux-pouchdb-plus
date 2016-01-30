@@ -6,7 +6,23 @@ const REINIT = 'redux-pouchdb-plus/REINIT';
 const INIT = 'redux-pouchdb-plus/INIT';
 const SET_REDUCER = 'redux-pouchdb-plus/SET_REDUCER';
 
+const initializedReducers = {};
+
 export function reinit(reducerName) {
+  const reducerNames = Object.keys(initializedReducers);
+
+  if (!reducerName) { // reinit all reducers
+    for (let n of reducerNames) {
+      initializedReducers[n] = false;
+    }
+  }
+  else { // reinit a specific reducer
+    if (reducerNames.indexOf(reducerName) === -1)
+      throw 'Invalid persistent reducer to reinit: ' + reducerName;
+
+    initializedReducers[reducerName] = false;
+  }
+
   return {type: REINIT, reducerName}
 }
 
@@ -24,13 +40,21 @@ export const persistentStore = (storeOptions={}) => createStore => (reducer, ini
 
 export const persistentReducer = (reducer, reducerOptions={}) => {
   let isImmutable = reducerOptions.immutable;
-  let isInitialized = false;
   let initialState;
   let store;
   let storeOptions;
   let changes;
   let saveReducer;
   let currentState;
+
+  initializedReducers[reducer.name] = false;
+
+  // call the provide (store only) callback as soon
+  // as all persistent reducers are initialized
+  function onReady() {
+    if (storeOptions.onReady instanceof Function)
+      storeOptions.onReady.call(store, store.dispatch);
+  }
 
   // call the provided callbacks as soon as this reducer
   // was initialized (loaded from or saved to the db)
@@ -86,9 +110,18 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       else
         throw err;
     }).then(() => {
-      isInitialized = true;
-
+      // from here on the reducer was loaded from db or saved to db
+      initializedReducers[reducer.name] = true;
       onInit(currentState);
+
+      let ready = true;
+      for (let reducerName of Object.keys(initializedReducers)) {
+        if (!initializedReducers[reducerName]) {
+          ready = false;
+          break;
+        }
+      }
+      if (ready) onReady();
 
       // listen to changes in the db (e.g. when a replication occurs)
       // and update the reducer state when it happens
@@ -174,6 +207,8 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       default:
         const nextState = reducer(state, action);
         if (!initialState) initialState = nextState;
+
+        const isInitialized = initializedReducers[reducer.name];
         if (isInitialized && !isEqual(nextState, currentState)) {
           saveReducer(reducer.name, toPouch(nextState)).then(() => {
             onSave(nextState);

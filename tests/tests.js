@@ -264,6 +264,36 @@ test('reducer immutable option should overwrite store immutable option', t => {
   });
 });
 
+test('onReady callback should get called correctly', t => {
+  t.plan(4);
+
+  let onReadyCounter = 0;
+
+  const db = new PouchDB('testdb', {db: require('memdown')});
+
+  const createPersistentStore = persistentStore({
+    onReady: function(dispatch) {
+      t.ok(dispatch instanceof Function);
+      onReadyCounter++;
+    }
+  })(createStore);
+
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, {db: db});
+  const store = createPersistentStore(finalReducer);
+
+  timeout(500).then(() => {
+    store.dispatch(reinit());
+    return timeout(500);
+  }).then(() => {
+    t.equal(onReadyCounter, 2);
+  }).then(() => {
+    return db.destroy();
+  }).then(() => {
+    t.ok(true);
+  });
+});
+
 test('callback functions should get called correctly', t => {
   const db1 = new PouchDB('testdb1', {db: require('memdown')});
   const db2 = new PouchDB('testdb2', {db: require('memdown')});

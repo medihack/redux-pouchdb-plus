@@ -109,7 +109,7 @@ You may provide the following callback functions as addition options to
 
 ```js
 // example for persistentStore, but works the same for persistentReducer function.
-persistentStore(counter {
+persistentStore(counter, {
   db,
   onInit: (reducerName, reducerState, dispatch) => {
     // called when this reducer was initialized
@@ -125,6 +125,19 @@ persistentStore(counter {
     // saved to the database
   }
 });
+```
+
+Additionally you may provide an `onReady` callback on the store that is called
+every time all persistent recuders finished the initialization.
+
+```js
+persistentStore(counter, {
+  db,
+  onReady: (dispatch) => {
+    // called when all reducers are initialized (also after
+    // a reinit for all reducers is finished)
+  }
+}
 ```
 
 ## Notes
