@@ -304,16 +304,13 @@ test('should work with immutable js data types', t => {
 });
 
 test('onReady callback should get called correctly', t => {
-  t.plan(4);
-
-  let onReadyCounter = 0;
+  t.plan(3);
 
   const db = new PouchDB('testdb', {db: require('memdown')});
 
   const createPersistentStore = persistentStore({
-    onReady: function(dispatch) {
-      t.ok(dispatch instanceof Function);
-      onReadyCounter++;
+    onReady: function(store) {
+      t.ok(store instanceof Object);
     }
   })(createStore);
 
@@ -325,7 +322,33 @@ test('onReady callback should get called correctly', t => {
     store.dispatch(reinit());
     return timeout(500);
   }).then(() => {
-    t.equal(onReadyCounter, 2);
+    return db.destroy();
+  }).then(() => {
+    t.ok(true);
+  });
+});
+
+test('onInit callback should get called correctly', t => {
+  t.plan(9);
+
+  const db = new PouchDB('testdb', {db: require('memdown')});
+
+  const createPersistentStore = persistentStore({
+    onInit: function(reducerName, reducerState, store) {
+      t.equal(this, null);
+      t.equal(reducerName, 'reducer');
+      t.equal(reducerState.x, 5);
+      t.equal(store.getState().x, 5);
+    }
+  })(createStore);
+
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, {db: db});
+  const store = createPersistentStore(finalReducer);
+
+  timeout(500).then(() => {
+    store.dispatch(reinit());
+    return timeout(500);
   }).then(() => {
     return db.destroy();
   }).then(() => {
@@ -333,103 +356,116 @@ test('onReady callback should get called correctly', t => {
   });
 });
 
-test('callback functions should get called correctly', t => {
-  const db1 = new PouchDB('testdb1', {db: require('memdown')});
-  const db2 = new PouchDB('testdb2', {db: require('memdown')});
+test('onUpdate callback should get called correctly', t => {
+  t.plan(5);
 
-  let dbChoice = 1;
-  const db = (reducerName, store) => {
-    return dbChoice === 1 ? db1 : db2;
-  }
-
-  let onSaveStoreCounter = 0;
-  let onSaveReducerCounter = 0;
+  const db = new PouchDB('testdb', {db: require('memdown')});
 
   const createPersistentStore = persistentStore({
-    db,
-    onInit: function(reducerName, reducerState, dispatch) {
-      t.equal(this.name, 'reducer');
+    onUpdate: function(reducerName, reducerState, store) {
+      t.equal(this, null);
       t.equal(reducerName, 'reducer');
-      t.equal(reducerState.x, 5);
-      t.ok(dispatch instanceof Function);
-    },
-    onUpdate: function(reducerName, reducerState, dispatch) {
-      t.equal(this.name, 'reducer');
-      t.equal(reducerName, 'reducer');
-      t.equal(reducerState.x, 3);
-      t.ok(dispatch instanceof Function);
-    },
-    onSave: function(reducerName, reducerState, dispatch) {
-      t.equal(this.name, 'reducer');
-      t.equal(reducerName, 'reducer');
-
-      if (onSaveStoreCounter === 0)
-        t.equal(reducerState.x, 5);
-      else if (onSaveStoreCounter === 1)
-        t.equal(reducerState.x, 6);
-      else if (onSaveStoreCounter === 2)
-        t.equal(reducerState.x, 5);
-      else
-        t.fail();
-
-      t.ok(dispatch instanceof Function);
-
-      onSaveStoreCounter++;
+      t.equal(reducerState.x, 2);
+      t.equal(store.getState().x, 5);
     }
   })(createStore);
 
   const reducer = setupPlainReducer();
-  const finalReducer = persistentReducer(reducer, {
-    onInit: function(reducerName, reducerState, dispatch) {
-      t.equal(this.name, 'reducer');
-      t.equal(reducerName, 'reducer');
-      t.equal(reducerState.x, 5);
-      t.ok(dispatch instanceof Function);
-    },
-    onUpdate: function(reducerName, reducerState, dispatch) {
-      t.equal(this.name, 'reducer');
-      t.equal(reducerName, 'reducer');
-      t.equal(reducerState.x, 3);
-      t.ok(dispatch instanceof Function);
-    },
-    onSave: function(reducerName, reducerState, dispatch) {
-      t.equal(this.name, 'reducer');
-      t.equal(reducerName, 'reducer');
+  const finalReducer = persistentReducer(reducer, {db: db});
+  const store = createPersistentStore(finalReducer);
 
-      if (onSaveReducerCounter === 0)
-        t.equal(reducerState.x, 5);
-      else if (onSaveReducerCounter === 1)
-        t.equal(reducerState.x, 6);
-      else if (onSaveReducerCounter === 2)
-        t.equal(reducerState.x, 5);
-      else
-        t.fail();
-
-      t.ok(dispatch instanceof Function);
-
-      onSaveReducerCounter++;
-    }
+  timeout(500).then(() => {
+    return db.get(reducer.name);
+  }).then(doc => {
+    doc.state.x = 2;
+    return db.put(doc);
+  }).then(() => {
+    return timeout(500);
+  }).then(() => {
+    return db.destroy();
+  }).then(() => {
+    t.ok(true);
   });
+});
+
+test('onSave callback should get called correctly', t => {
+  t.plan(9);
+
+  let callbackCounter = 0;
+
+  const db = new PouchDB('testdb', {db: require('memdown')});
+
+  const createPersistentStore = persistentStore({
+    onSave: function(reducerName, reducerState, store) {
+      t.equal(this, null);
+      t.equal(reducerName, 'reducer');
+
+      if (callbackCounter === 0) {
+        t.equal(reducerState.x, 5);
+        t.equal(store.getState().x, 5);
+      }
+      else {
+        t.equal(reducerState.x, 6);
+        t.equal(store.getState().x, 6);
+      }
+
+      callbackCounter++;
+    }
+  })(createStore);
+
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, {db: db});
   const store = createPersistentStore(finalReducer);
 
   timeout(500).then(() => {
     store.dispatch({type: INCREMENT});
     return timeout(500);
   }).then(() => {
-    return db1.get(reducer.name);
-  }).then(doc => {
-    doc.state.x = 3;
-    return db1.put(doc);
+    return db.destroy();
   }).then(() => {
-    return timeout(500);
+    t.ok(true);
+  });
+});
+
+test('callback functions should get called in correct order', t => {
+  t.plan(6);
+
+  let callbackCounter = 0;
+
+  const db = new PouchDB('testdb', {db: require('memdown')});
+
+  const createPersistentStore = persistentStore({
+    db,
+    onReady: function(reducerName, reducerState, store) {
+      t.equal(callbackCounter, 4);
+      callbackCounter++;
+    },
+    onInit: function(reducerName, reducerState, store) {
+      t.equal(callbackCounter, 3);
+      callbackCounter++;
+    },
+    onSave: function(reducerName, reducerState, store) {
+      t.equal(callbackCounter, 1);
+      callbackCounter++;
+    }
+  })(createStore);
+
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, {
+    onInit: function(reducerName, reducerState, store) {
+      t.equal(callbackCounter, 2);
+      callbackCounter++;
+    },
+    onSave: function(reducerName, reducerState, store) {
+      t.equal(callbackCounter, 0);
+      callbackCounter++;
+    }
+  });
+  const store = createPersistentStore(finalReducer);
+
+  timeout(500).then(() => {
+    return db.destroy();
   }).then(() => {
-    dbChoice = 2;
-    store.dispatch(reinit());
-  }).then(() => {
-    return timeout(500);
-  }).then(() => {
-    return Promise.all([db1.destroy(), db2.destroy()]);
-  }).then(() => {
-    t.end();
+    t.ok(true);
   });
 });

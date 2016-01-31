@@ -122,18 +122,20 @@ You may provide the following callback functions as addition options to
 // example for persistentStore, but works the same for persistentReducer function.
 persistentStore(counter, {
   db,
-  onInit: (reducerName, reducerState, dispatch) => {
-    // called when this reducer was initialized
+  onInit: (reducerName, reducerState, store) => {
+    // Called when this reducer was initialized
     // (the state was loaded from or saved to the
-    // database for the first time or after a reinit action)
+    // database for the first time or after a reinit action).
   },
-  onUpdate: (reducerName, reducerState, dispatch) => {
-    // called when the state of reducer was updated with
-    // data from the database
+  onUpdate: (reducerName, reducerState, store) => {
+    // Called when the state of reducer was updated with
+    // data from the database.
+    // Cave! The store still contains the state before
+    // the updated reducer state was applied to it.
   },
-  onSave: (reducerName, reducerState, dispatch) => {
-    // called every time the state of this reducer was
-    // saved to the database
+  onSave: (reducerName, reducerState, store) => {
+    // Called every time the state of this reducer was
+    // saved to the database.
   }
 });
 ```
@@ -144,9 +146,9 @@ every time all persistent recuders finished the initialization.
 ```js
 persistentStore(counter, {
   db,
-  onReady: (dispatch) => {
-    // called when all reducers are initialized (also after
-    // a reinit for all reducers is finished)
+  onReady: (store) => {
+    // Called when all reducers are initialized (also after
+    // a reinit for all reducers is finished).
   }
 }
 ```

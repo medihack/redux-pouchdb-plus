@@ -53,34 +53,34 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
   // as all persistent reducers are initialized
   function onReady() {
     if (storeOptions.onReady instanceof Function)
-      storeOptions.onReady.call(store, store.dispatch);
+      storeOptions.onReady.call(null, store);
   }
 
   // call the provided callbacks as soon as this reducer
   // was initialized (loaded from or saved to the db)
   function onInit(state) {
     if (reducerOptions.onInit instanceof Function)
-      reducerOptions.onInit.call(reducer, reducer.name, state, store.dispatch);
+      reducerOptions.onInit.call(null, reducer.name, state, store);
     if (storeOptions.onInit instanceof Function)
-      storeOptions.onInit.call(reducer, reducer.name, state, store.dispatch);
+      storeOptions.onInit.call(null, reducer.name, state, store);
   }
 
   // call the provided callbacks when this reducer
   // was updated with data from the db
   function onUpdate(state) {
     if (reducerOptions.onUpdate instanceof Function)
-      reducerOptions.onUpdate.call(reducer, reducer.name, state, store.dispatch);
+      reducerOptions.onUpdate.call(null, reducer.name, state, store);
     if (storeOptions.onUpdate instanceof Function)
-      storeOptions.onUpdate.call(reducer, reducer.name, state, store.dispatch);
+      storeOptions.onUpdate.call(null, reducer.name, state, store);
   }
 
   // call the provided callbacks when the state
   // of this reducer was saved to the db
   function onSave(state) {
     if (reducerOptions.onSave instanceof Function)
-      reducerOptions.onSave.call(reducer, reducer.name, state, store.dispatch);
+      reducerOptions.onSave.call(null, reducer.name, state, store);
     if (storeOptions.onSave instanceof Function)
-      storeOptions.onSave.call(reducer, reducer.name, state, store.dispatch);
+      storeOptions.onSave.call(null, reducer.name, state, store);
   }
 
   // get the current db connector an initialize the state of this
