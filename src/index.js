@@ -2,9 +2,9 @@ import equal from 'deep-equal';
 import Immutable from 'immutable';
 import save from './save.js';
 
-const REINIT = 'redux-pouchdb-plus/REINIT';
-const INIT = 'redux-pouchdb-plus/INIT';
-const SET_REDUCER = 'redux-pouchdb-plus/SET_REDUCER';
+const REINIT = '@@redux-pouchdb-plus/REINIT';
+const INIT = '@@redux-pouchdb-plus/INIT';
+const SET_REDUCER = '@@redux-pouchdb-plus/SET_REDUCER';
 
 const initializedReducers = {};
 
