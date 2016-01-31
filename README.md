@@ -87,20 +87,31 @@ reinit('counter');
 
 ### Use Immutable js states
 
-You can use [Immutable](https://facebook.github.io/immutable-js/) state by setting
-the `immutable` option.
+You can use [Immutable.js](https://facebook.github.io/immutable-js/) states
+in your reducers. This works automatically if the **initial state is an
+Immutable.js data type**.
 
 ```js
-// to the store enhancer (for all persistent reducers)
-persistentStore({db, immutable: true})
-// or to a reducer directly (prioritized)
-persistentReducer(counter, {db, immutable: true});
+// automatically serializes Immutable.js data types to PouchDB
+// when the initial state is an Immutable
+const counter = (state = Immutable.Map({count: 0}), action) => {
+  switch(action.type) {
+  case INCREMENT:
+    return { count: state.count + 1 };
+  case DECREMENT:
+    return { count: state.count - 1 };
+  default:
+    return state;
+  }
+};
+
+const finalReducer = persistentReducer(counter);
 ```
 
 **Cave!** As internally it is serialized with `Immutable.toJS()` and
 `Immutable.fromJS` it is not possible to use a mixture of immutable and
-plain Javascript data types. If you set `immutable` to `true` just make
-sure to only use immutable data structures!
+plain Javascript data types. So just make sure to only use pure
+immutable data structures.
 
 ### Provided callback functions
 

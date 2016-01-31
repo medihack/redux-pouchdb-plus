@@ -39,8 +39,8 @@ export const persistentStore = (storeOptions={}) => createStore => (reducer, ini
 }
 
 export const persistentReducer = (reducer, reducerOptions={}) => {
-  let isImmutable = reducerOptions.immutable;
   let initialState;
+  let immutable;
   let store;
   let storeOptions;
   let changes;
@@ -165,20 +165,23 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
   // Unfortunately it serializes to a bit
   // cryptic JSON string that is not so nice to save
   // in PouchDB.
+  function isImmutable(x) {
+    return Immutable.Iterable.isIterable(x);
+  }
   function toPouch(x) {
-    if (isImmutable)
+    if (immutable)
       return x.toJS();
     else
       return x;
   }
   function fromPouch(x) {
-    if (isImmutable)
+    if (immutable)
       return Immutable.fromJS(x);
     else
       return x;
   }
   function isEqual(x, y) {
-    if (isImmutable)
+    if (immutable)
       return Immutable.is(x, y);
     else
       return equal(x, y);
@@ -190,8 +193,6 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       case INIT:
         store = action.store;
         storeOptions = action.storeOptions;
-        if (isImmutable == null)
-          isImmutable = storeOptions.immutable;
       case REINIT:
         if (!action.reducerName || action.reducerName === reducer.name) {
           reinitReducer(initialState);
@@ -206,7 +207,11 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         }
       default:
         const nextState = reducer(state, action);
-        if (!initialState) initialState = nextState;
+
+        if (!initialState) {
+          initialState = nextState;
+          immutable = isImmutable(initialState);
+        }
 
         const isInitialized = initializedReducers[reducer.name];
         if (isInitialized && !isEqual(nextState, currentState)) {

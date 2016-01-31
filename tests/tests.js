@@ -276,40 +276,9 @@ test('should work with immutable js data types', t => {
   t.plan(5);
 
   const db = new PouchDB('testdb', {db : require('memdown')});
-  const createPersistentStore = persistentStore({db, immutable: true})(createStore);
+  const createPersistentStore = persistentStore({db})(createStore);
   const reducer = setupImmutableReducer();
   const finalReducer = persistentReducer(reducer);
-  const store = createPersistentStore(finalReducer);
-
-  timeout(500).then(() => {
-    t.equal(store.getState().get('x'), 5);
-    return db.get(reducer.name);
-  }).then(doc => {
-    t.equal(store.getState().get('x'), doc.state.x);
-  }).then(() => {
-    store.dispatch({
-      type: INCREMENT
-    });
-    return timeout(500);
-  }).then(() => {
-    t.equal(store.getState().get('x'), 6);
-    return db.get(reducer.name);
-  }).then(doc => {
-    t.equal(store.getState().get('x'), doc.state.x);
-  }).then(() => {
-    return db.destroy();
-  }).then(() => {
-    t.ok(true);
-  });
-});
-
-test('reducer immutable option should overwrite store immutable option', t => {
-  t.plan(5);
-
-  const db = new PouchDB('testdb', {db : require('memdown')});
-  const createPersistentStore = persistentStore({db, immutable: false})(createStore);
-  const reducer = setupImmutableReducer();
-  const finalReducer = persistentReducer(reducer, {immutable: true});
   const store = createPersistentStore(finalReducer);
 
   timeout(500).then(() => {
