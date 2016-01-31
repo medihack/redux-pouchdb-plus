@@ -138,8 +138,6 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         else if (!isEqual(change.doc.state, currentState))
           setReducer(change.doc);
       });
-    }).catch(err => {
-      console.error(err);
     });
   }
 
