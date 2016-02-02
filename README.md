@@ -74,14 +74,19 @@ connector itself. This makes it possible to switch databases dynamically during 
 ```js
 import { reinit } from 'redux-pouchdb-plus';
 
+let dbChoice = 1;
 const db = (reducerName, store, additionalOptions) => {
-  if (store.getState().foo === 'bar')
+  if (dbChoice === 1)
     return new PouchDB('dbname1');
   else
     return new PouchDB('dbname2');
 }
 
+// uses 'dbname1' database
 const finalReducer = persistentReducer(counter, {db});
+
+// switch to 'dbname2' database
+dbChoice = 2;
 reinit('counter');
 ```
 
