@@ -1,6 +1,6 @@
 {
   "name": "redux-pouchdb-plus",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Synchronize Redux store with PouchDB to have a persistent store.",
   "main": "lib/index.js",
   "scripts": {
