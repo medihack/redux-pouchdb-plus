@@ -135,7 +135,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
           saveReducer(change.doc._id, toPouch(currentState)).then(() => {
             onSave(currentState);
           });
-        else if (!isEqual(change.doc.state, currentState))
+        else if (!isEqual(fromPouch(change.doc.state), currentState))
           setReducer(change.doc);
       });
     });
