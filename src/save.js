@@ -1,9 +1,19 @@
 const unpersistedQueue = {};
-let isUpdating = {};
+let isSaving = {};
+
+// checks if there is some state saving in progress
+export function inSync() {
+  const reducerNames = Object.keys(isSaving);
+  for (let n of reducerNames) {
+    if (isSaving[n])
+      return false;
+  }
+  return true;
+}
 
 export default (db, localId) => {
   const saveReducer = (reducerName, reducerState) => {
-    if (isUpdating[reducerName]) {
+    if (isSaving[reducerName]) {
       // enqueue promise
       unpersistedQueue[reducerName] = unpersistedQueue[reducerName] || [];
       unpersistedQueue[reducerName].push(reducerState);
@@ -11,7 +21,7 @@ export default (db, localId) => {
       return Promise.resolve();
     }
 
-    isUpdating[reducerName] = true;
+    isSaving[reducerName] = true;
 
     return db.get(reducerName).catch(err => {
       if (err.status === 404) {
@@ -28,11 +38,11 @@ export default (db, localId) => {
     }).then(doc => {
       return db.put(doc);
     }).then(() => {
-      isUpdating[reducerName] = false;
+      delete isSaving[reducerName];
+
       if (unpersistedQueue[reducerName] &&
           unpersistedQueue[reducerName].length > 0) {
         const next = unpersistedQueue[reducerName].shift();
-
         return saveReducer(reducerName, next);
       }
     }).catch(err => {

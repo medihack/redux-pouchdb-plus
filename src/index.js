@@ -5,6 +5,8 @@ import Immutable from 'immutable';
 import transit from 'transit-immutable-js';
 import save from './save.js';
 
+export { inSync } from './save.js';
+
 // A local id to filter out local database changes (as those
 // may lead to several race conditions).
 // see also http://stackoverflow.com/questions/28280276/changes-filter-only-changes-from-other-db-instances

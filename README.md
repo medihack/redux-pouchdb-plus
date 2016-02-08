@@ -90,6 +90,19 @@ dbChoice = 2;
 reinit('counter');
 ```
 
+### Check if database is in sync
+
+With the `inSync` method you can check if all state changes of persistent
+reducers are saved to the database or if there is some saving in progress.
+
+```js
+import { inSync } from 'redux-pouchdb-plus';
+
+if (inSync()) {
+  // do something if the reducer states and the database are in sync
+}
+```
+
 ### Use Immutable js states
 
 You can use [Immutable.js](https://facebook.github.io/immutable-js/) states

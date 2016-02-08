@@ -5,7 +5,7 @@ import timeout from 'timeout-then';
 import Immutable from 'immutable';
 import transit from 'transit-immutable-js';
 import uuid from 'node-uuid';
-import { persistentStore, persistentReducer, reinit } from '../src/index';
+import { persistentStore, persistentReducer, reinit, inSync } from '../src/index';
 
 const INCREMENT = 'INCREMENT';
 const DECREMENT = 'DECREMENT';
@@ -520,6 +520,31 @@ test('should fix a race condition when changing the state directy one after anot
   }).then(doc => {
     t.equal(store.getState().x, 4);
     t.equal(store.getState().y, 8);
+    return db.destroy();
+  }).then(() => {
+    t.ok(true);
+  });
+});
+
+test('should correctly recognize if database is in sync with reducer state', t => {
+  t.plan(4);
+
+  const db = new PouchDB('testdb', {db : require('memdown')});
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer);
+  const store = createPersistentStore(finalReducer);
+
+  timeout(500).then(() => {
+    t.equal(inSync(), true);
+    store.dispatch({type: INCREMENT});
+    store.dispatch({type: INCREMENT});
+    t.equal(inSync(), false);
+    return timeout(500);
+  }).then(() => {
+    t.equal(inSync(), true);
+    return db.destroy();
+  }).then(() => {
     t.ok(true);
   });
 });
