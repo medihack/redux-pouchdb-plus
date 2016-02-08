@@ -43,6 +43,7 @@
     "immutable": "^3.7.6"
   },
   "dependencies": {
-    "deep-equal": "^1.0.1"
+    "deep-equal": "^1.0.1",
+    "node-uuid": "^1.4.7"
   }
 }

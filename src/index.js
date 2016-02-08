@@ -1,6 +1,12 @@
+import uuid from 'node-uuid';
 import equal from 'deep-equal';
 import Immutable from 'immutable';
 import save from './save.js';
+
+// A local id to filter out local database changes (as those
+// may lead to several race conditions).
+// see also http://stackoverflow.com/questions/28280276/changes-filter-only-changes-from-other-db-instances
+const LOCAL_ID = uuid.v1();
 
 const REINIT = '@@redux-pouchdb-plus/REINIT';
 const INIT = '@@redux-pouchdb-plus/INIT';
@@ -96,7 +102,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
     if (db instanceof Function)
       db = db(reducer.name, store);
 
-    saveReducer = save(db);
+    saveReducer = save(db, LOCAL_ID);
 
     db.get(reducer.name).then(doc => {
       // set reducer state if there was an entry found in the db
@@ -131,12 +137,14 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         since: 'now',
         doc_ids: [reducer.name]
       }).on('change', change => {
-        if (!change.doc.state)
-          saveReducer(change.doc._id, toPouch(currentState)).then(() => {
-            onSave(currentState);
-          });
-        else if (!isEqual(fromPouch(change.doc.state), currentState))
-          setReducer(change.doc);
+        if (change.doc.localId !== LOCAL_ID) {
+          if (!change.doc.state)
+            saveReducer(change.doc._id, toPouch(currentState)).then(() => {
+              onSave(currentState);
+            });
+          else if (!isEqual(fromPouch(change.doc.state), currentState))
+            setReducer(change.doc);
+        }
       });
     });
   }
@@ -213,12 +221,14 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
 
         const isInitialized = initializedReducers[reducer.name];
         if (isInitialized && !isEqual(nextState, currentState)) {
-          saveReducer(reducer.name, toPouch(nextState)).then(() => {
-            onSave(nextState);
+          currentState = nextState;
+          saveReducer(reducer.name, toPouch(currentState)).then(() => {
+            onSave(currentState);
           });
         }
+        else currentState = nextState;
 
-        return currentState = nextState;
+        return currentState;
     }
   }
 }

@@ -3,6 +3,7 @@ import { createStore, compose } from 'redux';
 import PouchDB from 'pouchdb';
 import timeout from 'timeout-then';
 import Immutable from 'immutable';
+import uuid from 'node-uuid';
 import { persistentStore, persistentReducer, reinit } from '../src/index';
 
 const INCREMENT = 'INCREMENT';
@@ -260,6 +261,11 @@ test('should update reducer state when db was changed (simulates replication)', 
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
     doc.state.x = 7;
+
+    // simulate as if db change comes from another
+    // source (like during a replication)
+    doc.localId = uuid.v1();
+
     return db.put(doc);
   }).then(() => {
     return timeout(500);
@@ -378,6 +384,11 @@ test('onUpdate callback should get called correctly', t => {
     return db.get(reducer.name);
   }).then(doc => {
     doc.state.x = 2;
+
+    // simulate as if db change comes from another
+    // source (like during a replication)
+    doc.localId = uuid.v1();
+
     return db.put(doc);
   }).then(() => {
     return timeout(500);
@@ -466,6 +477,46 @@ test('callback functions should get called in correct order', t => {
   timeout(500).then(() => {
     return db.destroy();
   }).then(() => {
+    t.ok(true);
+  });
+});
+
+test('should fix a race condition when changing the state directy one after another', t => {
+  t.plan(7);
+
+  const INCREMENT_X = 'INCREMENT_X';
+  const INCREMENT_Y = 'INCREMENT_Y';
+  const db = new PouchDB('testdb', {db : require('memdown')});
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = (state={x: 3, y: 7}, action) => {
+    switch(action.type) {
+      case 'INCREMENT_X':
+        return { x: state.x + 1, y: state.y };
+      case 'INCREMENT_Y':
+        return { x: state.x, y: state.y + 1 };
+      default:
+        return state;
+    }
+  }
+  const finalReducer = persistentReducer(reducer);
+  const store = createPersistentStore(finalReducer);
+
+  timeout(500).then(() => {
+    t.equal(store.getState().x, 3);
+    t.equal(store.getState().y, 7);
+    return db.get(reducer.name);
+  }).then(doc => {
+    t.equal(store.getState().x, doc.state.x);
+    t.equal(store.getState().y, doc.state.y);
+  }).then(() => {
+    store.dispatch({type: INCREMENT_X});
+    store.dispatch({type: INCREMENT_Y});
+    return timeout(500);
+  }).then(() => {
+    return db.get(reducer.name);
+  }).then(doc => {
+    t.equal(store.getState().x, 4);
+    t.equal(store.getState().y, 8);
     t.ok(true);
   });
 });

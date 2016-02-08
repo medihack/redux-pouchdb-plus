@@ -1,7 +1,7 @@
 const unpersistedQueue = {};
 let isUpdating = {};
 
-export default db => {
+export default (db, localId) => {
   const saveReducer = (reducerName, reducerState) => {
     if (isUpdating[reducerName]) {
       // enqueue promise
@@ -25,6 +25,7 @@ export default db => {
       // TODO use object spread operator when standardized
       // (see https://github.com/vicentedealencar/redux-pouchdb/issues/5)
       const newDoc = Object.assign({}, doc);
+      newDoc.localId = localId;
 
       if (Array.isArray(reducerState)) {
         newDoc.state = [
@@ -42,7 +43,8 @@ export default db => {
       return db.put(newDoc);
     }).then(() => {
       isUpdating[reducerName] = false;
-      if (unpersistedQueue[reducerName]) {
+      if (unpersistedQueue[reducerName] &&
+          unpersistedQueue[reducerName].length > 0) {
         const next = unpersistedQueue[reducerName].shift();
 
         return saveReducer(reducerName, next);
