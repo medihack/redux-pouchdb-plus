@@ -5,7 +5,11 @@
   "main": "lib/index.js",
   "scripts": {
     "prepublish": "rimraf lib && babel src --out-dir lib",
-    "test": "babel-tape-runner tests/*.js"
+    "test": "babel-tape-runner tests/*.js",
+    "deploy:patch": "npm version patch; npm run deploy",
+    "deploy:minor": "npm version minor; npm run deploy",
+    "deploy:major": "npm version major; npm run deploy",
+    "deploy": "git push origin master; npm publish"
   },
   "files": [
     "lib/",
