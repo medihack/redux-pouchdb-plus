@@ -43,8 +43,8 @@
     "immutable": "^3.7.6"
   },
   "dependencies": {
-    "deep-equal": "^1.0.1",
     "lodash.clonedeep": "^4.1.0",
+    "lodash.isequal": "^4.0.0",
     "node-uuid": "^1.4.7",
     "transit-immutable-js": "^0.5.2",
     "transit-js": "^0.8.846"

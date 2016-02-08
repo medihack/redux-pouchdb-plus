@@ -1,5 +1,5 @@
 import uuid from 'node-uuid';
-import equal from 'deep-equal';
+import equalDeep from 'lodash.isequal';
 import cloneDeep from 'lodash.clonedeep';
 import Immutable from 'immutable';
 import transit from 'transit-immutable-js';
@@ -192,7 +192,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
     if (immutable)
       return Immutable.is(x, y);
     else
-      return equal(x, y);
+      return equalDeep(x, y);
   }
 
   // the proxy function that wraps the real reducer
