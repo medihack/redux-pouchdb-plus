@@ -3,6 +3,7 @@ import { createStore, compose } from 'redux';
 import PouchDB from 'pouchdb';
 import timeout from 'timeout-then';
 import Immutable from 'immutable';
+import transit from 'transit-immutable-js';
 import uuid from 'node-uuid';
 import { persistentStore, persistentReducer, reinit } from '../src/index';
 
@@ -291,7 +292,8 @@ test('should work with immutable js data types', t => {
     t.equal(store.getState().get('x'), 5);
     return db.get(reducer.name);
   }).then(doc => {
-    t.equal(store.getState().get('x'), doc.state.x);
+    const immutableState = transit.fromJSON(JSON.stringify(doc.state));
+    t.equal(store.getState().get('x'), immutableState.get('x'));
   }).then(() => {
     store.dispatch({
       type: INCREMENT
@@ -301,7 +303,8 @@ test('should work with immutable js data types', t => {
     t.equal(store.getState().get('x'), 6);
     return db.get(reducer.name);
   }).then(doc => {
-    t.equal(store.getState().get('x'), doc.state.x);
+    const immutableState = transit.fromJSON(JSON.stringify(doc.state));
+    t.equal(store.getState().get('x'), immutableState.get('x'));
   }).then(() => {
     return db.destroy();
   }).then(() => {

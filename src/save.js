@@ -22,25 +22,11 @@ export default (db, localId) => {
     }).catch(err => {
       console.error(err);
     }).then(doc => {
-      // TODO use object spread operator when standardized
-      // (see https://github.com/vicentedealencar/redux-pouchdb/issues/5)
-      const newDoc = Object.assign({}, doc);
-      newDoc.localId = localId;
-
-      if (Array.isArray(reducerState)) {
-        newDoc.state = [
-          ...(doc.state || []),
-          ...reducerState
-        ];
-      } else {
-        // TODO use object spread operator when standardized
-        // (see https://github.com/vicentedealencar/redux-pouchdb/issues/5)
-        newDoc.state = Object.assign({}, doc.state, reducerState);
-      }
-
-      return newDoc;
-    }).then(newDoc => {
-      return db.put(newDoc);
+      doc.localId = localId;
+      doc.state = reducerState;
+      return doc;
+    }).then(doc => {
+      return db.put(doc);
     }).then(() => {
       isUpdating[reducerName] = false;
       if (unpersistedQueue[reducerName] &&

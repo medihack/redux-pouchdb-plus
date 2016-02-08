@@ -1,6 +1,8 @@
 import uuid from 'node-uuid';
 import equal from 'deep-equal';
+import cloneDeep from 'lodash.clonedeep';
 import Immutable from 'immutable';
+import transit from 'transit-immutable-js';
 import save from './save.js';
 
 // A local id to filter out local database changes (as those
@@ -176,15 +178,15 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
   }
   function toPouch(x) {
     if (immutable)
-      return x.toJS();
+      return JSON.parse(transit.toJSON(x));
     else
-      return x;
+      return cloneDeep(x);
   }
   function fromPouch(x) {
     if (immutable)
-      return Immutable.fromJS(x);
+      return transit.fromJSON(JSON.stringify(x));
     else
-      return x;
+      return cloneDeep(x);
   }
   function isEqual(x, y) {
     if (immutable)

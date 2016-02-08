@@ -113,10 +113,18 @@ const counter = (state = Immutable.Map({count: 0}), action) => {
 const finalReducer = persistentReducer(counter);
 ```
 
-**Cave!** As internally it is serialized with `Immutable.toJS()` and
-`Immutable.fromJS` it is not possible to use a mixture of immutable and
-plain Javascript data types. So just make sure to only use pure
-immutable data structures.
+It is even possible to mix immutable and plain Javascript data
+as internally [transit-immutable-js](https://github.com/glenjamin/transit-immutable-js)
+is used for serialization to the database. Just make sure that the top
+state container of the reducer is an immutable.
+
+```js
+// this is a valid state
+Immutable.Map({x: [1, 2, 3]});
+
+// this will open the doors to hell
+[1, 2, Immutable.Map({x: 3})];
+```
 
 ### Provided callback functions
 
