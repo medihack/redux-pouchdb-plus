@@ -7,10 +7,10 @@ import save from './save.js';
 
 export { inSync } from './save.js';
 
-// A local id to filter out local database changes (as those
+// A client hash to filter out local database changes (as those
 // may lead to several race conditions).
 // see also http://stackoverflow.com/questions/28280276/changes-filter-only-changes-from-other-db-instances
-const LOCAL_ID = uuid.v1();
+const CLIENT_HASH = uuid.v1();
 
 const REINIT = '@@redux-pouchdb-plus/REINIT';
 const INIT = '@@redux-pouchdb-plus/INIT';
@@ -106,7 +106,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
     if (db instanceof Function)
       db = db(reducer.name, store);
 
-    saveReducer = save(db, LOCAL_ID);
+    saveReducer = save(db, CLIENT_HASH);
 
     db.get(reducer.name).then(doc => {
       // set reducer state if there was an entry found in the db
@@ -141,7 +141,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         since: 'now',
         doc_ids: [reducer.name]
       }).on('change', change => {
-        if (change.doc.localId !== LOCAL_ID) {
+        if (change.doc.localId !== CLIENT_HASH) {
           if (!change.doc.state)
             saveReducer(change.doc._id, toPouch(currentState)).then(() => {
               onSave(currentState);
