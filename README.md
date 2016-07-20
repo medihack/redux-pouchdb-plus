@@ -87,7 +87,10 @@ const finalReducer = persistentReducer(counter, {db});
 
 // switch to 'dbname2' database
 dbChoice = 2;
-reinit('counter');
+// reinitialize reducer counter
+store.dispatch(reinit('counter'));
+// reinitialize all reducers
+store.dispatch(reinit());
 ```
 
 ### Check if database is in sync
