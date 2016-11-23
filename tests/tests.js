@@ -4,7 +4,7 @@ import PouchDB from 'pouchdb';
 import timeout from 'timeout-then';
 import Immutable from 'immutable';
 import transit from 'transit-immutable-js';
-import uuid from 'node-uuid';
+import uuid from 'uuid';
 import { persistentStore, persistentReducer, reinit, inSync } from '../src/index';
 
 const INCREMENT = 'INCREMENT';

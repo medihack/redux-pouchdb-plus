@@ -1,4 +1,4 @@
-import uuid from 'node-uuid';
+import uuid from 'uuid';
 import equalDeep from 'lodash.isequal';
 import cloneDeep from 'lodash.clonedeep';
 import Immutable from 'immutable';
