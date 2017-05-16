@@ -57,7 +57,9 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
   let saveReducer;
   let currentState;
 
-  initializedReducers[reducer.name] = false;
+  const reducerName = reducerOptions.name || reducer.name;
+
+  initializedReducers[reducerName] = false;
 
   // call the provide (store only) callback as soon
   // as all persistent reducers are initialized
@@ -70,27 +72,27 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
   // was initialized (loaded from or saved to the db)
   function onInit(state) {
     if (reducerOptions.onInit instanceof Function)
-      reducerOptions.onInit.call(null, reducer.name, state, store);
+      reducerOptions.onInit.call(null, reducerName, state, store);
     if (storeOptions.onInit instanceof Function)
-      storeOptions.onInit.call(null, reducer.name, state, store);
+      storeOptions.onInit.call(null, reducerName, state, store);
   }
 
   // call the provided callbacks when this reducer
   // was updated with data from the db
   function onUpdate(state) {
     if (reducerOptions.onUpdate instanceof Function)
-      reducerOptions.onUpdate.call(null, reducer.name, state, store);
+      reducerOptions.onUpdate.call(null, reducerName, state, store);
     if (storeOptions.onUpdate instanceof Function)
-      storeOptions.onUpdate.call(null, reducer.name, state, store);
+      storeOptions.onUpdate.call(null, reducerName, state, store);
   }
 
   // call the provided callbacks when the state
   // of this reducer was saved to the db
   function onSave(state) {
     if (reducerOptions.onSave instanceof Function)
-      reducerOptions.onSave.call(null, reducer.name, state, store);
+      reducerOptions.onSave.call(null, reducerName, state, store);
     if (storeOptions.onSave instanceof Function)
-      storeOptions.onSave.call(null, reducer.name, state, store);
+      storeOptions.onSave.call(null, reducerName, state, store);
   }
 
   // get the current db connector an initialize the state of this
@@ -104,24 +106,24 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       'You must at least provide one to the store or the reducer.';
 
     if (db instanceof Function)
-      db = db(reducer.name, store);
+      db = db(reducerName, store);
 
     saveReducer = save(db, CLIENT_HASH);
 
-    db.get(reducer.name).then(doc => {
+    db.get(reducerName).then(doc => {
       // set reducer state if there was an entry found in the db
       setReducer(doc);
     }).catch(err => {
       // save the reducer state if there was no entry in the db
       if (err.status === 404)
-        return saveReducer(reducer.name, toPouch(state)).then(() => {
+        return saveReducer(reducerName, toPouch(state)).then(() => {
           onSave(state);
         });
       else
         throw err;
     }).then(() => {
       // from here on the reducer was loaded from db or saved to db
-      initializedReducers[reducer.name] = true;
+      initializedReducers[reducerName] = true;
       onInit(currentState);
 
       let ready = true;
@@ -139,7 +141,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         include_docs: true,
         live: true,
         since: 'now',
-        doc_ids: [reducer.name]
+        doc_ids: [reducerName]
       }).on('change', change => {
         if (change.doc.localId !== CLIENT_HASH) {
           if (!change.doc.state)
@@ -204,13 +206,13 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         store = action.store;
         storeOptions = action.storeOptions;
       case REINIT:
-        if (!action.reducerName || action.reducerName === reducer.name) {
+        if (!action.reducerName || action.reducerName === reducerName) {
           reinitReducer(initialState);
           return currentState = initialState;
         }
         else return state;
       case SET_REDUCER:
-        if (action.reducer === reducer.name && action.state) {
+        if (action.reducer === reducerName && action.state) {
           currentState = reducer(action.state, action);
           onUpdate(currentState);
           return currentState
@@ -223,10 +225,10 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
           immutable = isImmutable(initialState);
         }
 
-        const isInitialized = initializedReducers[reducer.name];
+        const isInitialized = initializedReducers[reducerName];
         if (isInitialized && !isEqual(nextState, currentState)) {
           currentState = nextState;
-          saveReducer(reducer.name, toPouch(currentState)).then(() => {
+          saveReducer(reducerName, toPouch(currentState)).then(() => {
             onSave(currentState);
           });
         }

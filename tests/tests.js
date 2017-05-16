@@ -548,3 +548,27 @@ test('should correctly recognize if database is in sync with reducer state', t =
     t.ok(true);
   });
 });
+
+test('should correctly set passed reducer function name', t => {
+  t.plan(2);
+  const reducerName = 'testReducerName'
+  const db = new PouchDB('testdb', {db : require('memdown')});
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, { name: reducerName });
+  const store = createPersistentStore(finalReducer);
+
+
+  timeout(500).then(() => {
+    return db.get(reducerName);
+  }).then(doc => {
+    t.is(doc._id, reducerName);
+    return db.put(doc);
+  }).then(() => {
+    return timeout(500);
+  }).then(() => {
+    return db.destroy();
+  }).then(() => {
+    t.ok(true);
+  });
+})
