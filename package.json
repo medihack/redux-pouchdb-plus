@@ -43,8 +43,8 @@
     "timeout-then": "^1.0.0"
   },
   "peerDependencies": {
-    "pouchdb": "^5.2.0",
-    "immutable": "^3.7.6"
+    "immutable": "^3.8.1",
+    "pouchdb": "^6.2.0"
   },
   "dependencies": {
     "lodash.clonedeep": "^4.1.0",
