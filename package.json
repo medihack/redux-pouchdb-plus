@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "prepublish": "rimraf lib && babel src --out-dir lib",
+    "postinstall": "babel src --out-dir lib",
     "test": "babel-tape-runner tests/*.js",
     "deploy:patch": "npm version patch; npm run deploy",
     "deploy:minor": "npm version minor; npm run deploy",
