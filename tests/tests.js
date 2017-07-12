@@ -44,12 +44,14 @@ test('should persist store state with provided db connector', t => {
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db})(createStore);
   const reducer = setupPlainReducer();
-  const finalReducer = persistentReducer(reducer);
+  const finalReducer = persistentReducer(reducer, {name: "test"});
+  console.log(finalReducer.getName)
+  console.log(finalReducer.getName())
   const store = createPersistentStore(finalReducer);
 
   timeout(500).then(() => {
     t.equal(store.getState().x, 5);
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
   }).then(() => {
@@ -59,7 +61,7 @@ test('should persist store state with provided db connector', t => {
     return timeout(500);
   }).then(() => {
     t.equal(store.getState().x, 6);
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
   }).then(() => {
@@ -82,7 +84,7 @@ test('should persist store state with provided db function', t => {
 
   timeout(500).then(() => {
     t.equal(store.getState().x, 5);
-    return db().get(reducer.name);
+    return db().get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
   }).then(() => {
@@ -92,7 +94,7 @@ test('should persist store state with provided db function', t => {
     return timeout(500);
   }).then(() => {
     t.equal(store.getState().x, 6);
-    return db().get(reducer.name);
+    return db().get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
   }).then(() => {
@@ -125,7 +127,7 @@ test('should handle a reinit action of multiple reducers correctly', t => {
   // use db 1
   timeout(500).then(() => {
     t.equal(store.getState().x, 5);
-    return db1.get(reducer.name);
+    return db1.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
   }).then(() => {
@@ -135,7 +137,7 @@ test('should handle a reinit action of multiple reducers correctly', t => {
     return timeout(500);
   }).then(() => {
     t.equal(store.getState().x, 6);
-    return db1.get(reducer.name);
+    return db1.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
 
@@ -146,7 +148,7 @@ test('should handle a reinit action of multiple reducers correctly', t => {
     return timeout(500);
   }).then(() => {
     t.equal(store.getState().x, 5);
-    return db2.get(reducer.name);
+    return db2.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
   }).then(() => {
@@ -156,7 +158,7 @@ test('should handle a reinit action of multiple reducers correctly', t => {
     return timeout(500);
   }).then(() => {
     t.equal(store.getState().x, 4);
-    return db2.get(reducer.name);
+    return db2.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
 
@@ -167,7 +169,7 @@ test('should handle a reinit action of multiple reducers correctly', t => {
     return timeout(500);
   }).then(() => {
     t.equal(store.getState().x, 6);
-    return db1.get(reducer.name);
+    return db1.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
 
@@ -218,11 +220,11 @@ test('should prefer reducer db over store db', t => {
     });
     return timeout(500);
   }).then(() => {
-    return reducerDb.get(reducer.name);
+    return reducerDb.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, 6);
   }).then(() => {
-    return storeDb.get(reducer.name);
+    return storeDb.get(finalReducer.getName());
   }).catch(err => {
     // there should be no reducer document in store db
     // as it was never used
@@ -258,7 +260,7 @@ test('should update reducer state when db was changed (simulates replication)', 
 
   timeout(500).then(() => {
     t.equal(store.getState().x, 5);
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
     doc.state.x = 7;
@@ -290,7 +292,7 @@ test('should work with immutable js data types', t => {
 
   timeout(500).then(() => {
     t.equal(store.getState().get('x'), 5);
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     const immutableState = transit.fromJSON(JSON.stringify(doc.state));
     t.equal(store.getState().get('x'), immutableState.get('x'));
@@ -301,7 +303,7 @@ test('should work with immutable js data types', t => {
     return timeout(500);
   }).then(() => {
     t.equal(store.getState().get('x'), 6);
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     const immutableState = transit.fromJSON(JSON.stringify(doc.state));
     t.equal(store.getState().get('x'), immutableState.get('x'));
@@ -315,10 +317,11 @@ test('should work with immutable js data types', t => {
 test('onReady callback should get called correctly', t => {
   t.plan(3);
 
-  const db = new PouchDB('testdb', {db: require('memdown')});
+  const db = new PouchDB('testdb', {name: "test", db: require('memdown')});
 
   const createPersistentStore = persistentStore({
     onReady: function(store) {
+      console.log('ready -> yes')
       t.ok(store instanceof Object);
     }
   })(createStore);
@@ -384,7 +387,7 @@ test('onUpdate callback should get called correctly', t => {
   const store = createPersistentStore(finalReducer);
 
   timeout(500).then(() => {
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     doc.state.x = 2;
 
@@ -507,7 +510,7 @@ test('should fix a race condition when changing the state directy one after anot
   timeout(500).then(() => {
     t.equal(store.getState().x, 3);
     t.equal(store.getState().y, 7);
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, doc.state.x);
     t.equal(store.getState().y, doc.state.y);
@@ -516,7 +519,7 @@ test('should fix a race condition when changing the state directy one after anot
     store.dispatch({type: INCREMENT_Y});
     return timeout(500);
   }).then(() => {
-    return db.get(reducer.name);
+    return db.get(finalReducer.getName());
   }).then(doc => {
     t.equal(store.getState().x, 4);
     t.equal(store.getState().y, 8);
