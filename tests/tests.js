@@ -1,5 +1,5 @@
 import test from 'tape';
-import { createStore, compose } from 'redux';
+import { createStore, compose, combineReducers } from 'redux';
 import PouchDB from 'pouchdb';
 import timeout from 'timeout-then';
 import Immutable from 'immutable';
@@ -44,9 +44,7 @@ test('should persist store state with provided db connector', t => {
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db})(createStore);
   const reducer = setupPlainReducer();
-  const finalReducer = persistentReducer(reducer, {name: "test"});
-  console.log(finalReducer.getName)
-  console.log(finalReducer.getName())
+  const finalReducer = persistentReducer(reducer);
   const store = createPersistentStore(finalReducer);
 
   timeout(500).then(() => {
@@ -317,11 +315,10 @@ test('should work with immutable js data types', t => {
 test('onReady callback should get called correctly', t => {
   t.plan(3);
 
-  const db = new PouchDB('testdb', {name: "test", db: require('memdown')});
+  const db = new PouchDB('testdb', {db: require('memdown')});
 
   const createPersistentStore = persistentStore({
     onReady: function(store) {
-      console.log('ready -> yes')
       t.ok(store instanceof Object);
     }
   })(createStore);
@@ -550,4 +547,42 @@ test('should correctly recognize if database is in sync with reducer state', t =
   }).then(() => {
     t.ok(true);
   });
+});
+
+test('should allow creation of persistentStore with any name', t => {
+  t.plan(3);
+
+  const db = new PouchDB('testdb', {db : require('memdown')});
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, {name: 'test reducer'});
+  const store = createPersistentStore(finalReducer);
+
+  t.equal(finalReducer.getName('test reducer'), 'test reducer');
+
+  timeout(500).then(() => {
+    db.get('reducer').catch(err => {
+      t.equal(err.status, 404);
+    });
+    db.get('test reducer').then(doc => {
+      t.notEqual(doc.status, 404);
+    });
+  })
+});
+
+test('should allow creation of multiple redux stores with the same reducer name', t => {
+  t.plan(2);
+
+  const db = new PouchDB('testdb', {db : require('memdown')});
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, {name: 'test reducer'});
+  const store = createPersistentStore(finalReducer);
+  const secondFinalReducer = persistentReducer(reducer, {name: 'test reducer'});
+  //duplicate reducer in another store should work
+  t.doesNotThrow(() => {createPersistentStore(secondFinalReducer)});
+  const thirdFinalReducer = persistentReducer(reducer, {name: 'duplicate'});
+  const forthFinalReducer = persistentReducer(reducer, {name: 'duplicate'});
+  //single store with the same reducer name
+  t.throws(() => {createPersistentStore(combineReducers([thirdFinalReducer, forthFinalReducer]))});
 });

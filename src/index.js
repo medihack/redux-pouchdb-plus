@@ -16,20 +16,11 @@ const REINIT = '@@redux-pouchdb-plus/REINIT';
 const INIT = '@@redux-pouchdb-plus/INIT';
 const SET_REDUCER = '@@redux-pouchdb-plus/SET_REDUCER';
 
+const allReducers = []
+
 export function reinit(reducerName) {
-  const reducerNames = Object.keys(initializedReducers);
-
-  /*if (!reducerName) { // reinit all reducers
-    for (let n of reducerNames) {
-      initializedReducers[n] = false;
-    }
-  }
-  else { // reinit a specific reducer
-    if (reducerNames.indexOf(reducerName) === -1)
-      throw 'Invalid persistent reducer to reinit: ' + reducerName;
-
-    initializedReducers[reducerName] = false;
-  }*/
+  if(reducerName && allReducers.indexOf(reducerName) === -1)
+    throw 'Invalid persistent reducer to reinit: ' + reducerName;
 
   return {type: REINIT, reducerName}
 }
@@ -37,9 +28,6 @@ export function reinit(reducerName) {
 export const persistentStore = (storeOptions={}) => createStore => (reducer, initialState) => {
   const store = createStore(reducer, initialState);
   const initializedReducers = {};
-
-  console.log('reducers -> ', Object.keys(initializedReducers).length)
-  console.log(Object.keys(initializedReducers))
 
   store.dispatch({
     type: INIT,
@@ -127,13 +115,11 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
     }).then(() => {
       // from here on the reducer was loaded from db or saved to db
       initializedReducers[name] = true;
-      console.log('init - > ', name, initializedReducers[name])
       onInit(currentState);
 
       let ready = true;
       for (let reducerName of Object.keys(initializedReducers)) {
         if (!initializedReducers[reducerName]) {
-          console.log('some not initialized ', reducerName);
           ready = false;
           break;
         }
@@ -211,9 +197,11 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         store = action.store;
         storeOptions = action.storeOptions;
         initializedReducers = action.initializedReducers;
+        if(initializedReducers.hasOwnProperty(name))
+          throw 'Duplicate reducer of name ' + name + ' in the same store';
         initializedReducers[name] = false;
+        allReducers.push(name);
       case REINIT:
-        console.log('reinit -> ', name, action.reducerName)
         if (!action.reducerName || action.reducerName === name) {
           initializedReducers[name] = false
           reinitReducer(initialState);
