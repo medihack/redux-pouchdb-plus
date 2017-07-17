@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "prepublish": "rimraf lib && babel src --out-dir lib",
+    "postinstall": "babel src --out-dir lib",
     "test": "babel-tape-runner tests/*.js",
     "deploy:patch": "npm version patch; npm run deploy",
     "deploy:minor": "npm version minor; npm run deploy",
@@ -43,14 +44,12 @@
     "timeout-then": "^1.0.0"
   },
   "peerDependencies": {
-    "pouchdb": "^5.2.0",
-    "immutable": "^3.7.6"
+    "immutable": "^3.8.1",
+    "pouchdb": "^6.2.0"
   },
   "dependencies": {
-    "immutable": "^3.8.1",
     "lodash.clonedeep": "^4.1.0",
     "lodash.isequal": "^4.0.0",
-    "pouchdb": "^5.4.5",
     "transit-immutable-js": "^0.5.2",
     "transit-js": "^0.8.846",
     "uuid": "^3.0.0"
