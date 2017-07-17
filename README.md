@@ -11,6 +11,7 @@ So all Kudos to him. The rewrite was necessary to allow the following extras:
 - Allow to switch databases dynamically.
 - Support for [Immutable](https://facebook.github.io/immutable-js/) states beside pure Javascript types.
 - Provide several callbacks (when initialization and database access happens).
+- Allow custom name for PouchDB document used by reducer. (great for multi-user applications)
 
 The code is quite well tested using [tape](https://github.com/substack/tape).
 
