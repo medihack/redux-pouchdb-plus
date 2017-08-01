@@ -11,6 +11,7 @@ So all Kudos to him. The rewrite was necessary to allow the following extras:
 - Allow to switch databases dynamically.
 - Support for [Immutable](https://facebook.github.io/immutable-js/) states beside pure Javascript types.
 - Provide several callbacks (when initialization and database access happens).
+- Allow custom name for PouchDB document used by reducer. (great for multi-user applications)
 
 The code is quite well tested using [tape](https://github.com/substack/tape).
 
@@ -64,6 +65,12 @@ the provided database to the store).
 ```js
 const db2 = new PouchDB('another_dbname');
 const finalReducer = persistentReducer(counter, {db: db2});
+```
+
+A custom name (\_id) can also be given to the document created/used for the reducer.
+
+```js
+const finalReducer = persistentReducer(counter, {name: 'custom name'});
 ```
 
 ### Switching databases during runtime
@@ -151,6 +158,7 @@ You may provide the following callback functions as addition options to
 // example for persistentStore, but works the same for persistentReducer function.
 persistentStore(counter, {
   db,
+  name,
   onInit: (reducerName, reducerState, store) => {
     // Called when this reducer was initialized
     // (the state was loaded from or saved to the
@@ -188,7 +196,7 @@ The current behavior is to have one document for each persisted reducer that loo
 
 ``` js
 {
-  _id: 'reducerName', // the name the reducer function
+  _id: 'reducerName', // the name the reducer function, or the name provided by {name: 'custom name'}
   state: {}|[], // the state of the reducer
   _rev: '' // pouchdb keeps track of the revisions
 }
