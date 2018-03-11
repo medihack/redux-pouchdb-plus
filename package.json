@@ -4,8 +4,7 @@
   "description": "Synchronize Redux store with PouchDB to have a persistent store.",
   "main": "lib/index.js",
   "scripts": {
-    "prepublish": "rimraf lib && babel src --out-dir lib",
-    "postinstall": "babel src --out-dir lib",
+    "prepare": "rimraf lib && babel src --out-dir lib",
     "test": "babel-tape-runner tests/*.js",
     "deploy:patch": "npm version patch; npm run deploy",
     "deploy:minor": "npm version minor; npm run deploy",
@@ -50,6 +49,7 @@
     "immutable": "^3.8.1",
     "lodash.clonedeep": "^4.1.0",
     "lodash.isequal": "^4.0.0",
+    "pouchdb": "^6.2.0",
     "transit-immutable-js": "^0.5.2",
     "transit-js": "^0.8.846",
     "uuid": "^3.0.0"
