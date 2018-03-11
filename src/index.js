@@ -16,13 +16,13 @@ const REINIT = '@@redux-pouchdb-plus/REINIT';
 const INIT = '@@redux-pouchdb-plus/INIT';
 const SET_REDUCER = '@@redux-pouchdb-plus/SET_REDUCER';
 
-const allReducers = []
+const allReducers = [];
 
 export function reinit(reducerName) {
   if(reducerName && allReducers.indexOf(reducerName) === -1)
     throw 'Invalid persistent reducer to reinit: ' + reducerName;
 
-  return {type: REINIT, reducerName}
+  return {type: REINIT, reducerName};
 }
 
 export const persistentStore = (storeOptions={}) => createStore => (reducer, initialState) => {
@@ -37,7 +37,7 @@ export const persistentStore = (storeOptions={}) => createStore => (reducer, ini
   });
 
   return store;
-}
+};
 
 export const persistentReducer = (reducer, reducerOptions={}) => {
   let initialState;
@@ -158,7 +158,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       state: _state,
       _rev
     });
-  };
+  }
 
   // Support functions for Immutable js.
   // Immutable.toJS and Immutable.fromJS don't support
@@ -197,24 +197,29 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         store = action.store;
         storeOptions = action.storeOptions;
         initializedReducers = action.initializedReducers;
-        if(initializedReducers.hasOwnProperty(name))
+        if (initializedReducers.hasOwnProperty(name))
           throw 'Duplicate reducer of name ' + name + ' in the same store';
         initializedReducers[name] = false;
         allReducers.push(name);
+        // falls through
+
       case REINIT:
         if (!action.reducerName || action.reducerName === name) {
-          initializedReducers[name] = false
+          initializedReducers[name] = false;
           reinitReducer(initialState);
           return currentState = initialState;
         }
         else return state;
+
       case SET_REDUCER:
         if (action.reducer === name && action.state) {
           currentState = reducer(action.state, action);
           onUpdate(currentState);
-          return currentState
+          return currentState;
         }
-      default:
+        // falls through
+
+      default: {
         const nextState = reducer(state, action);
 
         if (!initialState) {
@@ -232,10 +237,13 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         else currentState = nextState;
 
         return currentState;
+      }
     }
-  }
+  };
+
   proxyReducer.getName = () => {
     return name;
-  }
-  return proxyReducer
-}
+  };
+
+  return proxyReducer;
+};
