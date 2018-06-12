@@ -4,12 +4,15 @@
   "description": "Synchronize Redux store with PouchDB to have a persistent store.",
   "main": "lib/index.js",
   "scripts": {
-    "prepare": "rimraf lib && babel src --out-dir lib",
-    "test": "babel-tape-runner tests/*.js",
+    "babel": "babel src --out-dir lib",
+    "build": "yarn clean && yarn test && yarn babel",
+    "clean": "rimraf lib",
+    "prepublishOnly": "yarn build",
     "deploy:patch": "yarn version --patch && yarn deploy",
     "deploy:minor": "yarn version --minor && yarn deploy",
     "deploy:major": "yarn version --major && yarn deploy",
-    "deploy": "git push origin master && yarn publish"
+    "deploy": "git push origin master && yarn publish",
+    "test": "babel-tape-runner tests/*.js"
   },
   "files": [
     "lib/",
@@ -32,6 +35,9 @@
   },
   "homepage": "https://github.com/medihack/redux-pouchdb-plus#readme",
   "devDependencies": {
+    "babel-cli": "^6.4.5",
+    "babel-core": "^6.4.5",
+    "babel-preset-env": "^1.7.0",
     "babel-tape-runner": "^2.0.0",
     "immutable": "^3.8.2",
     "memdown": "^1.1.1",
@@ -40,13 +46,7 @@
     "tape": "^4.4.0",
     "timeout-then": "^1.0.0"
   },
-  "peerDependencies": {
-    "pouchdb": "^6.2.0"
-  },
   "dependencies": {
-    "babel-cli": "^6.4.5",
-    "babel-core": "^6.4.5",
-    "babel-preset-env": "^1.7.0",
     "lodash.clonedeep": "^4.1.0",
     "lodash.isequal": "^4.0.0",
     "pouchdb": "^6.2.0",
