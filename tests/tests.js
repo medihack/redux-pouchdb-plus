@@ -2,8 +2,7 @@ import test from 'tape';
 import { createStore, compose, combineReducers } from 'redux';
 import PouchDB from 'pouchdb';
 import timeout from 'timeout-then';
-import Immutable from 'immutable';
-import transit from 'transit-immutable-js';
+import { Map, toJS, fromJS, is } from 'immutable';
 import uuid from 'uuid';
 import { persistentStore, persistentReducer, reinit, inSync } from '../src/index';
 
@@ -25,7 +24,7 @@ const setupPlainReducer = () => {
 }
 
 const setupImmutableReducer = () => {
-  const reducer = (state = Immutable.Map({x: 5}), action) => {
+  const reducer = (state = Map({x: 5}), action) => {
     switch(action.type) {
       case INCREMENT:
         return state.update('x', x => x + 1);
@@ -286,15 +285,18 @@ test('should work with immutable js data types', t => {
   const db = new PouchDB('testdb', {db : require('memdown')});
   const createPersistentStore = persistentStore({db})(createStore);
   const reducer = setupImmutableReducer();
-  const finalReducer = persistentReducer(reducer);
+  const finalReducer = persistentReducer(reducer, {
+    toPouch: toJS,
+    fromPouch: fromJS,
+    isEqual: is
+  });
   const store = createPersistentStore(finalReducer);
 
   timeout(500).then(() => {
     t.equal(store.getState().get('x'), 5);
     return db.get(finalReducer.getName());
   }).then(doc => {
-    const immutableState = transit.fromJSON(JSON.stringify(doc.state));
-    t.equal(store.getState().get('x'), immutableState.get('x'));
+    t.equal(store.getState().get('x'), doc.state.x);
   }).then(() => {
     store.dispatch({
       type: INCREMENT
@@ -304,8 +306,7 @@ test('should work with immutable js data types', t => {
     t.equal(store.getState().get('x'), 6);
     return db.get(finalReducer.getName());
   }).then(doc => {
-    const immutableState = transit.fromJSON(JSON.stringify(doc.state));
-    t.equal(store.getState().get('x'), immutableState.get('x'));
+    t.equal(store.getState().get('x'), doc.state.x);
   }).then(() => {
     return db.destroy();
   }).then(() => {

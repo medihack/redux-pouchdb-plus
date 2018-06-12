@@ -9,7 +9,7 @@ So all Kudos to him. The rewrite was necessary to allow the following extras:
 
 - Have different Pouch databases for different reducers.
 - Allow to switch databases dynamically.
-- Support for [Immutable](https://facebook.github.io/immutable-js/) states beside pure Javascript types.
+- Support for other state types (like [Immutable](https://facebook.github.io/immutable-js/) states).
 - Provide several callbacks (when initialization and database access happens).
 - Allow custom name for PouchDB document used by reducer. (great for multi-user applications)
 
@@ -116,13 +116,14 @@ if (inSync()) {
 ### Use Immutable js states
 
 You can use [Immutable.js](https://facebook.github.io/immutable-js/) states
-in your reducers. This works automatically if the **initial state is an
-Immutable.js data type**.
+in your reducers by providing some serialization helpers as options.
 
 ```js
-// automatically serializes Immutable.js data types to PouchDB
-// when the initial state is an Immutable
-const counter = (state = Immutable.Map({count: 0}), action) => {
+// import the necessary immutable stuff
+import { Map, toJS, fromJS, is } from 'immutable'
+
+// setup your reducer with immuatable state
+const counter = (state = Map({count: 0}), action) => {
   switch(action.type) {
   case INCREMENT:
     return { count: state.count + 1 };
@@ -133,20 +134,13 @@ const counter = (state = Immutable.Map({count: 0}), action) => {
   }
 };
 
-const finalReducer = persistentReducer(counter);
-```
-
-It is even possible to mix immutable and plain Javascript data
-as internally [transit-immutable-js](https://github.com/glenjamin/transit-immutable-js)
-is used for serialization to the database. Just make sure that the top
-state container of the reducer is an immutable.
-
-```js
-// this is a valid state
-Immutable.Map({x: [1, 2, 3]});
-
-// this will open the doors to hell
-[1, 2, Immutable.Map({x: 3})];
+// provide the following options to make the serialization to the
+// database work
+const finalReducer = persistentReducer(counter, {
+  toPouch: toJS,
+  fromPouch: fromJS,
+  isEqual: is
+});
 ```
 
 ### Provided callback functions

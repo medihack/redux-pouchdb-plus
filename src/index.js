@@ -1,8 +1,6 @@
 import uuid from 'uuid';
 import equalDeep from 'lodash.isequal';
 import cloneDeep from 'lodash.clonedeep';
-import Immutable from 'immutable';
-import transit from 'transit-immutable-js';
 import save from './save.js';
 
 export { inSync } from './save.js';
@@ -41,7 +39,6 @@ export const persistentStore = (storeOptions={}) => createStore => (reducer, ini
 
 export const persistentReducer = (reducer, reducerOptions={}) => {
   let initialState;
-  let immutable;
   let store;
   let storeOptions;
   let initializedReducers = {};
@@ -160,32 +157,21 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
     });
   }
 
-  // Support functions for Immutable js.
-  // Immutable.toJS and Immutable.fromJS don't support
-  // a mixture of immutable and plain js data.
-  // transit-immutable-js would be another option that
-  // also would handle this mixture.
-  // Unfortunately it serializes to a bit
-  // cryptic JSON string that is not so nice to save
-  // in PouchDB.
-  function isImmutable(x) {
-    return Immutable.Iterable.isIterable(x);
-  }
   function toPouch(x) {
-    if (immutable)
-      return JSON.parse(transit.toJSON(x));
+    if (reducerOptions.toPouch instanceof Function)
+      return reducerOptions.toPouch.call(null, x)
     else
       return cloneDeep(x);
   }
   function fromPouch(x) {
-    if (immutable)
-      return transit.fromJSON(JSON.stringify(x));
+    if (reducerOptions.fromPouch instanceof Function)
+      return reducerOptions.fromPouch.call(null, x)
     else
       return cloneDeep(x);
   }
   function isEqual(x, y) {
-    if (immutable)
-      return Immutable.is(x, y);
+    if (reducerOptions.isEqual instanceof Function)
+      return reducerOptions.isEqual.call(null, x, y)
     else
       return equalDeep(x, y);
   }
@@ -224,7 +210,6 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
 
         if (!initialState) {
           initialState = nextState;
-          immutable = isImmutable(initialState);
         }
 
         const isInitialized = initializedReducers[name];

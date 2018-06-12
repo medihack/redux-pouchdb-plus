@@ -33,6 +33,7 @@
   "homepage": "https://github.com/medihack/redux-pouchdb-plus#readme",
   "devDependencies": {
     "babel-tape-runner": "^2.0.0",
+    "immutable": "^3.8.2",
     "memdown": "^1.1.1",
     "redux": "^3.0.5",
     "rimraf": "^2.5.1",
@@ -46,12 +47,9 @@
     "babel-cli": "^6.4.5",
     "babel-core": "^6.4.5",
     "babel-preset-env": "^1.7.0",
-    "immutable": "^3.8.1",
     "lodash.clonedeep": "^4.1.0",
     "lodash.isequal": "^4.0.0",
     "pouchdb": "^6.2.0",
-    "transit-immutable-js": "^0.5.2",
-    "transit-js": "^0.8.846",
     "uuid": "^3.0.0"
   }
 }
