@@ -6,10 +6,10 @@
   "scripts": {
     "prepare": "rimraf lib && babel src --out-dir lib",
     "test": "babel-tape-runner tests/*.js",
-    "deploy:patch": "npm version patch; npm run deploy",
-    "deploy:minor": "npm version minor; npm run deploy",
-    "deploy:major": "npm version major; npm run deploy",
-    "deploy": "git push origin master; npm publish"
+    "deploy:patch": "yarn version --patch && yarn deploy",
+    "deploy:minor": "yarn version --minor && yarn deploy",
+    "deploy:major": "yarn version --major && yarn deploy",
+    "deploy": "git push origin master && yarn publish"
   },
   "files": [
     "lib/",
