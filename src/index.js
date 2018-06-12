@@ -20,7 +20,7 @@ const allReducers = [];
 
 export function reinit(reducerName) {
   if(reducerName && allReducers.indexOf(reducerName) === -1)
-    throw 'Invalid persistent reducer to reinit: ' + reducerName;
+    throw TypeError('Invalid persistent reducer to reinit: ' + reducerName);
 
   return {type: REINIT, reducerName};
 }
@@ -93,8 +93,8 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
     if (changes) changes.cancel();
 
     let db = reducerOptions.db || storeOptions.db;
-    if (!db) throw 'No db connector provided. ' +
-      'You must at least provide one to the store or the reducer.';
+    if (!db) throw TypeError('No db connector provided. ' +
+      'You must at least provide one to the store or the reducer.');
 
     if (db instanceof Function)
       db = db(name, store);
@@ -198,7 +198,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         storeOptions = action.storeOptions;
         initializedReducers = action.initializedReducers;
         if (initializedReducers.hasOwnProperty(name))
-          throw 'Duplicate reducer of name ' + name + ' in the same store';
+          throw Error('Duplicate reducer of name ' + name + ' in the same store');
         initializedReducers[name] = false;
         allReducers.push(name);
         // falls through

@@ -195,6 +195,7 @@ test('should handle a reinit with provided reducer name', t => {
     store.dispatch(reinit('foo'));
   }).catch(() => {
     t.ok(true);
+    return timeout(500)
   }).then(() => {
     return db.destroy();
   }).then(() => {
@@ -242,7 +243,7 @@ test('should throw error if no db was provided', t => {
     createPersistentStore(finalReducer);
   }
   catch(err) {
-    t.ok(err.match(/No db connector provided/));
+    t.ok(err.message.match(/No db connector provided/));
     t.end();
   }
 });
