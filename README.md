@@ -172,7 +172,7 @@ persistentStore(counter, {
 ```
 
 Additionally you may provide an `onReady` callback on the store that is called
-every time all persistent recuders finished the initialization.
+every time all persistent reducers finished the initialization.
 
 ```js
 persistentStore(counter, {
