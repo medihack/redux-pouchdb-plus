@@ -181,27 +181,35 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
   }
 
    const reduceAndMaybeSave = (state,action) => {
-        const nextState = reducer(state, action);
+    const nextState = reducer(state, action);
 
-        if (!initialState) {
-          initialState = nextState;
-        }
+    if (!initialState) {
+        initialState = nextState;
+    }
 
-        const isInitialized = initializedReducers[name];
-        if (isInitialized && !paused && !isEqual(nextState, currentState)) {
-          currentState = nextState;
-          saveReducer(name, toPouch(currentState)).then(() => {
-            onSave(currentState);
-          });
-        }
-        else currentState = nextState;
+    const isInitialized = initializedReducers[name];
 
-        return currentState;
+    if (isInitialized && !paused && !isEqual(nextState, currentState)) {
+        currentState = nextState;
+        saveReducer(name, toPouch(currentState)).then(() => {
+        onSave(currentState);
+        });
+    }
+    else if (!paused ) currentState = nextState;
+
+    return nextState;
    };
 
   // the proxy function that wraps the real reducer
   const proxyReducer = (state, action) => {
     switch (action.type) {
+      case PAUSE_SAVING:
+        paused = true;
+        return state;
+
+      case RESUME_SAVING:
+        paused = false;
+        return reduceAndMaybeSave(state,action);
       
       case INIT:
         store = action.store;
