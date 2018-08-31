@@ -183,6 +183,36 @@ persistentStore(counter, {
   }
 }
 ```
+### Pausing and resuming the save to the database 
+
+Saving the state to the database can be paused and resumed
+via the `PAUSE_SAVING` and `RESUME_SAVING` actions.
+
+```js
+import { PAUSE_SAVING, RESUME_SAVING, persistentStore, persistentReducer } 
+    from 'redux-pouchdb-plus';
+
+
+// create the store the usual way...
+
+store.dispatch( { type: 'INCREMENT' } );  // will be saved as usual 
+
+store.dispatch( { type: 'PAUSE_SAVING' } );   
+ 
+store.dispatch( { type: 'INCREMENT' } );  // won't be saved
+
+store.dispatch( { type: 'INCREMENT' } );  // won't be saved either
+
+store.dispatch( { type: 'RESUME_SAVING' } ); // saving is resumed
+
+store.dispatch( { type: 'INCREMENT' } );  // will be saved as usual 
+```
+
+If the store changed between a `PAUSE_SAVING` and the following 
+`RESUME_SAVING`, the `RESUME_SAVING` will immediately trigger a save.
+
+Note that `PAUSE_SAVING` prevents the local store from saving its 
+changes to the database, but won't prevent updates coming from the database.
 
 ## Notes
 

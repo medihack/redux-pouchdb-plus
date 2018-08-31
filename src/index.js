@@ -14,6 +14,9 @@ const REINIT = '@@redux-pouchdb-plus/REINIT';
 const INIT = '@@redux-pouchdb-plus/INIT';
 const SET_REDUCER = '@@redux-pouchdb-plus/SET_REDUCER';
 
+export const PAUSE_SAVING  = '@@redux-pouchdb-plus/PAUSE_SAVING';
+export const RESUME_SAVING = '@@redux-pouchdb-plus/RESUME_SAVING';
+
 const allReducers = [];
 
 export function reinit(reducerName) {
@@ -46,6 +49,7 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
   let saveReducer;
   let currentState;
   let name = reducerOptions.name ? reducerOptions.name : reducer.name;
+  let paused = false;
 
   initializedReducers[name] = false;
 
@@ -176,9 +180,37 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
       return equalDeep(x, y);
   }
 
+   const reduceAndMaybeSave = (state,action) => {
+    const nextState = reducer(state, action);
+
+    if (!initialState) {
+        initialState = nextState;
+    }
+
+    const isInitialized = initializedReducers[name];
+
+    if (isInitialized && !paused && !isEqual(nextState, currentState)) {
+        currentState = nextState;
+        saveReducer(name, toPouch(currentState)).then(() => {
+        onSave(currentState);
+        });
+    }
+    else if (!paused ) currentState = nextState;
+
+    return nextState;
+   };
+
   // the proxy function that wraps the real reducer
   const proxyReducer = (state, action) => {
     switch (action.type) {
+      case PAUSE_SAVING:
+        paused = true;
+        return state;
+
+      case RESUME_SAVING:
+        paused = false;
+        return reduceAndMaybeSave(state,action);
+      
       case INIT:
         store = action.store;
         storeOptions = action.storeOptions;
@@ -205,24 +237,8 @@ export const persistentReducer = (reducer, reducerOptions={}) => {
         }
         // falls through
 
-      default: {
-        const nextState = reducer(state, action);
-
-        if (!initialState) {
-          initialState = nextState;
-        }
-
-        const isInitialized = initializedReducers[name];
-        if (isInitialized && !isEqual(nextState, currentState)) {
-          currentState = nextState;
-          saveReducer(name, toPouch(currentState)).then(() => {
-            onSave(currentState);
-          });
-        }
-        else currentState = nextState;
-
-        return currentState;
-      }
+      default: 
+        return reduceAndMaybeSave(state,action);
     }
   };
 

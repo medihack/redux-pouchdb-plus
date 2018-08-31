@@ -4,7 +4,7 @@ import PouchDB from 'pouchdb';
 import timeout from 'timeout-then';
 import { Map, toJS, fromJS, is } from 'immutable';
 import uuid from 'uuid';
-import { persistentStore, persistentReducer, reinit, inSync } from '../src/index';
+import { PAUSE_SAVING, RESUME_SAVING, persistentStore, persistentReducer, reinit, inSync } from '../src/index';
 
 const INCREMENT = 'INCREMENT';
 const DECREMENT = 'DECREMENT';
@@ -587,4 +587,50 @@ test('should allow creation of multiple redux stores with the same reducer name'
   const forthFinalReducer = persistentReducer(reducer, {name: 'duplicate'});
   //single store with the same reducer name
   t.throws(() => {createPersistentStore(combineReducers([thirdFinalReducer, forthFinalReducer]))});
+});
+
+test('should allow to pause and resume saving', t => {
+  t.plan(4);
+
+  const db = new PouchDB('testdb', {db : require('memdown')});
+  const createPersistentStore = persistentStore({db})(createStore);
+  const reducer = setupPlainReducer();
+  const finalReducer = persistentReducer(reducer, {name: 'test'});
+  const store = createPersistentStore(finalReducer);
+
+  const state_x = () => store.getState().x;
+  const getDb = () => db.get('test').then( doc => doc.state );
+
+  timeout(500)
+    .then(() => {
+      store.dispatch({ type: INCREMENT });
+      return timeout(500);
+    })
+    .then(getDb)
+    .then( doc => { 
+        // right now, we are in sync 
+        t.equal( doc.x, state_x() ); 
+        store.dispatch({ type: PAUSE_SAVING });
+        store.dispatch({ type: INCREMENT });
+
+        return timeout(500); 
+    })
+    .then( getDb )
+    .then( doc => {
+        // we are paused, so out of sync
+        t.notEqual( doc.x, state_x() );
+
+        store.dispatch({ type: RESUME_SAVING });
+        return timeout(500);  
+    })
+    .then( getDb )
+    .then( doc => {
+        // resuming should have kicked off a save
+        t.equal( doc.x, state_x() ); 
+        store.dispatch({ type: INCREMENT });
+        return timeout(500);
+    })
+    .then( getDb ) 
+    .then( doc => t.equal( doc.x, state_x() ) ) // still syncing
+    ;
 });
